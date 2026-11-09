@@ -1,69 +1,61 @@
 # EduShop — Epic 1 API Execution Results
 
-Results are **tester-reported**. A PASS on an endpoint does not automatically confirm each individual negative scenario.
+**Feature:** Authentication & Account Access  
+**Environment:** EduShop Local (`http://localhost:5000`)  
+**Source of results:** Tester-reported execution in Postman. Expected outcomes are based on the EduShop API documentation and the recorded test cases. Actual results summarize the tester's confirmations; detailed request/response evidence is not attached.
 
-| ID | Feature | Test Case | Status |
-|---|---|---|---|
-| EQ-T14 | Registration | Verify that the API registers a user with valid data. | PASS |
-| API-AUTH-02 | Registration | Verify registration rejects missing required fields. | PASS |
-| API-AUTH-03 | Registration | Verify registration rejects an invalid email format. | PASS |
-| API-AUTH-04 | Registration | Verify registration rejects passwords shorter than 6 characters. | PASS |
-| API-AUTH-05 | Registration | Verify registration rejects mismatched passwords. | PASS |
-| API-AUTH-06 | Registration | Verify registration rejects an already registered email. | PASS |
-| API-AUTH-07 | Registration | Verify registration rejects passwords that violate complexity rules. | PASS |
-| API-AUTH-08 | Refresh Token | Verify that a valid refresh token generates a new token pair. | NOT CONFIRMED |
-| API-AUTH-09 | Refresh Token | Verify that an invalid access token is rejected. | NOT CONFIRMED |
-| API-AUTH-10 | Refresh Token | Verify that a previously used refresh token is rejected. | NOT CONFIRMED |
-| API-AUTH-11 | Refresh Token | Verify that an expired refresh token is rejected. | NOT CONFIRMED |
-| API-AUTH-12 | Refresh Token | Verify that a revoked refresh token is rejected. | NOT CONFIRMED |
-| API-AUTH-13 | Refresh Token | Verify that refresh fails when the user no longer exists. | NOT CONFIRMED |
-| API-AUTH-14 | Logout | Verify that logout invalidates the user's refresh token. | PASS |
-| API-AUTH-15 | Login | Verify successful login with valid credentials | PASS |
-| API-AUTH-16 | Login | Verify login validation rejects missing or malformed fields | PASS (endpoint-level report) |
-| API-AUTH-17 | Login | Verify wrong password and non-existent email return the same generic message | PASS |
-| API-AUTH-18 | Access Control | Verify a Customer token cannot access an Admin-only API | PASS |
+## Registration — `POST /api/auth/register`
 
-## Actual results / evidence notes
+| TC ID | Test Scenario | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| EQ-T14 | Register with valid data | `200 OK`; authentication response with Customer role and tokens | Tester reported successful registration and expected response | PASS |
+| API-AUTH-02 | Missing required fields | `400 Bad Request`; validation error | Tester reported expected validation rejection | PASS |
+| API-AUTH-03 | Invalid email format | `400 Bad Request`; email validation error | Tester reported expected validation rejection | PASS |
+| API-AUTH-04 | Password shorter than 6 characters | `400 Bad Request`; password validation error | Tester reported expected validation rejection | PASS |
+| API-AUTH-05 | Passwords do not match | `400 Bad Request`; confirmation validation error | Tester reported expected validation rejection | PASS |
+| API-AUTH-06 | Email already registered | `400 Bad Request`; duplicate-email error | Tester reported expected duplicate-email rejection | PASS |
+| API-AUTH-07 | Password complexity violations | `400 Bad Request`; password policy error | Tester reported expected password policy rejection | PASS |
 
-**EQ-T14** — Passed (reported by tester; detailed response evidence not provided).
+## Login — `POST /api/auth/login`
 
-**API-AUTH-02** — Passed (reported by tester; detailed response evidence not provided).
+| TC ID | Test Scenario | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| API-AUTH-15 | Valid credentials | `200 OK`; access and refresh tokens, access token valid for 60 minutes | Tester reported successful login and 60-minute access token lifetime | PASS |
+| API-AUTH-16 | Missing or malformed fields | `400 Bad Request`; validation response | Tester reported Login validation PASS; individual datasets were not detailed | PASS |
+| API-AUTH-17 | Wrong password vs. non-existent email | `401 Unauthorized` for both; identical generic message | Tester reported the same `Wrong Email or Password` message in both cases | PASS |
 
-**API-AUTH-03** — Passed (reported by tester; detailed response evidence not provided).
+## Refresh Token — `POST /api/auth/refresh`
 
-**API-AUTH-04** — Passed (reported by tester; detailed response evidence not provided).
+| TC ID | Test Scenario | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| API-AUTH-08 | Valid, unused refresh token | `200 OK`; new access + refresh token pair | Tester explicitly confirmed `200` for valid refresh | PASS |
+| API-AUTH-09 | Unparseable access token | `401 Unauthorized`; `Invalid access token.` | Tester explicitly confirmed `401` | PASS |
+| API-AUTH-10 | Reuse previously used refresh token | `401 Unauthorized`; `Invalid or expired refresh token.` | Tester explicitly confirmed `401` | PASS |
+| API-AUTH-11 | Expired refresh token | `401 Unauthorized`; `Invalid or expired refresh token.` | Tester explicitly confirmed `401` | PASS |
+| API-AUTH-12 | Revoked refresh token | `401 Unauthorized`; `Invalid or expired refresh token.` | Tester explicitly confirmed `401` | PASS |
+| API-AUTH-13 | Refresh token belongs to deleted user | `401 Unauthorized`; `User not found.` | Tester explicitly confirmed `401` | PASS |
 
-**API-AUTH-05** — Passed (reported by tester; detailed response evidence not provided).
+## Logout — `POST /api/auth/logout` (verified using `POST /api/auth/refresh`)
 
-**API-AUTH-06** — Passed (reported by tester; detailed response evidence not provided).
+| TC ID | Test Scenario | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| API-AUTH-14 | Refresh token cannot be reused after logout | After logout, refresh returns `401 Unauthorized` with `Invalid or expired refresh token.` | Tester logged out, then attempted refresh using the old token; received `401` and `Invalid or expired refresh token.` | PASS |
 
-**API-AUTH-07** — Passed (reported by tester; detailed response evidence not provided).
+## Access Control — Admin-only API endpoint
 
-**API-AUTH-08** — Not separately documented.
+| TC ID | Test Scenario | Expected Result | Actual Result | Status |
+|---|---|---|---|---|
+| API-AUTH-18 | Customer calls an Admin-only endpoint with a valid Customer token | `403 Forbidden` | Tester reported `403 Forbidden` | PASS |
 
-**API-AUTH-09** — Not separately documented.
+**Endpoint note:** The exact Admin-only request path used for API-AUTH-18 was not recorded. Add it when available rather than guessing an endpoint.
 
-**API-AUTH-10** — Not separately documented.
+## Execution Summary
 
-**API-AUTH-11** — Not separately documented.
+| Metric | Result |
+|---|---:|
+| Test Cases | 18 |
+| Passed | 18 |
+| Failed | 0 |
+| Pass Rate | 100% (tester-reported) |
 
-**API-AUTH-12** — Not separately documented.
-
-**API-AUTH-13** — Not separately documented.
-
-**API-AUTH-14** — After logout, the refresh request returned 401 Unauthorized with message "Invalid or expired refresh token."
-
-**API-AUTH-15** — Tester reported successful login and 60-minute token lifetime.
-
-**API-AUTH-16** — Tester reported Login API PASS; individual datasets not confirmed.
-
-**API-AUTH-17** — Tester reported both returned "Wrong Email or Password".
-
-**API-AUTH-18** — Tester reported 403 Forbidden.
-
-## Coverage limitations
-
-- Refresh Token endpoint was reported PASS overall, but individual negative-case outcomes were not separately confirmed.
-- Logout refresh-token revocation and Customer-to-Admin 403 checks were explicitly reported PASS.
-- UI redirect checks, /me endpoint checks, and other Epic 1 acceptance criteria are not claimed as API-executed here.
-- No request/response screenshots or Postman run exports are attached.
+**Evidence:** Detailed Postman request/response exports are not attached. This file records reported outcomes and does not claim independent verification. UI-only scenarios and `GET /api/auth/me` are outside this execution summary.
